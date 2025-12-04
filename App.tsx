@@ -123,16 +123,17 @@ const App: React.FC = () => {
   const ramPercent = (systemData.ram.used / systemData.ram.total) * 100;
 
   return (
-    <div className="min-h-screen w-full relative bg-slate-950 text-white overflow-x-hidden selection:bg-cyan-500/30 font-sans">
+    // REMOVED 'bg-slate-950' from here so the fixed background behind acts as the main background
+    <div className="min-h-screen w-full relative bg-transparent text-white overflow-x-hidden selection:bg-cyan-500/30 font-sans">
       
-      {/* --- BACKGROUND LAYERS (Fixed) --- */}
+      {/* --- BACKGROUND LAYERS (Fixed to Viewport) --- */}
       {bgImage ? (
         <div 
-          className="fixed inset-0 bg-cover bg-center pointer-events-none -z-50 transition-all duration-1000 opacity-60"
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat pointer-events-none -z-50 transition-all duration-1000"
           style={{ backgroundImage: `url(${bgImage})` }}
         >
-          {/* Dark Overlay for readability */}
-          <div className="absolute inset-0 bg-slate-950/70"></div>
+          {/* Reduced opacity of the overlay to 40% (was 70%) so the image is more visible */}
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]"></div>
         </div>
       ) : (
         <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black pointer-events-none -z-50"></div>
@@ -183,7 +184,7 @@ const App: React.FC = () => {
              {/* Background Changer Button */}
              <button 
                 onClick={() => bgInputRef.current?.click()}
-                className="flex items-center gap-2 px-3 py-1 mt-1 rounded bg-slate-800/50 border border-white/5 hover:border-cyan-500/30 transition-all group"
+                className="flex items-center gap-2 px-3 py-1 mt-1 rounded bg-slate-800/50 border border-white/5 hover:border-cyan-500/30 transition-all group backdrop-blur-md"
              >
                 <ImageIcon size={12} className="text-slate-500 group-hover:text-cyan-400" />
                 <span className="text-[9px] font-tech text-slate-500 group-hover:text-white uppercase tracking-widest">Set Wallpaper</span>

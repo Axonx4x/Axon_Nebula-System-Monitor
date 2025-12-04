@@ -42,9 +42,6 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
        analyserRef.current.fftSize = 256;
     }
 
-    // Connect source only once to prevent errors on re-renders
-    // We check if the element already has a connected source in a real app, 
-    // but here we just try-catch or ensure we don't reconnect purely based on ref existence
     try {
         if (!sourceRef.current) {
             sourceRef.current = ctx.createMediaElementSource(element);
@@ -111,10 +108,10 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
             if (el) {
                 el.play().catch(e => console.error("Autoplay interrupted", e));
             }
-        }, 100); // Small delay to ensure DOM update
+        }, 100); 
         return () => clearTimeout(timeout);
     }
-  }, [currentIndex, currentTrack]); // Trigger when index or track changes
+  }, [currentIndex, currentTrack]);
 
   useEffect(() => {
     if (isPlaying && currentTrack?.type === 'audio') {
@@ -149,16 +146,18 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
     
     let nextIndex;
     if (isShuffling) {
-        // Pick random index different from current
-        do {
-            nextIndex = Math.floor(Math.random() * queue.length);
-        } while (queue.length > 1 && nextIndex === currentIndex);
+        // Improved shuffle: Ensure we pick a new track
+        if (queue.length === 1) nextIndex = 0;
+        else {
+            do {
+                nextIndex = Math.floor(Math.random() * queue.length);
+            } while (nextIndex === currentIndex);
+        }
     } else {
         nextIndex = (currentIndex + 1) % queue.length;
     }
     
     setCurrentIndex(nextIndex);
-    // Note: We do NOT set isPlaying(false) here, allowing continuous playback via useEffect
   };
 
   const prevTrack = () => {
