@@ -1,0 +1,7 @@
+{
+  "name": "Nebula System Monitor",
+  "description": "A futuristic, sci-fi themed system monitor dashboard with galaxy aesthetics, simulating system stats for Linux/KDE enthusiasts.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

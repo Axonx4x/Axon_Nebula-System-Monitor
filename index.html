@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>Nebula Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sci: ['Orbitron', 'sans-serif'],
+              tech: ['Rajdhani', 'sans-serif'],
+            },
+            colors: {
+              cyan: {
+                400: '#22d3ee',
+                500: '#06b6d4',
+                900: '#164e63',
+              },
+              fuchsia: {
+                500: '#d946ef',
+                900: '#701a75',
+              },
+              slate: {
+                850: '#151e2e',
+                900: '#0f172a',
+                950: '#020617',
+              }
+            },
+            animation: {
+              'spin-slow': 'spin 10s linear infinite',
+              'spin-slower': 'spin 20s linear infinite',
+              'spin-super-slow': 'spin 40s linear infinite',
+              'spin-reverse-slow': 'spin-reverse 15s linear infinite',
+              'spin-reverse-slower': 'spin-reverse 30s linear infinite',
+              'spin-fast': 'spin 3s linear infinite',
+              'spin-super-fast': 'spin 1s linear infinite',
+              'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+              'spin-reverse': {
+                'from': { transform: 'rotate(360deg)' },
+                'to': { transform: 'rotate(0deg)' },
+              },
+              'float': {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              }
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        background-color: #020617;
+        color: white;
+        /* overflow: hidden; Removed to allow scrolling */
+      }
+      .neon-text {
+        text-shadow: 0 0 5px rgba(34, 211, 238, 0.5), 0 0 10px rgba(34, 211, 238, 0.3);
+      }
+      .neon-border {
+        box-shadow: 0 0 5px rgba(34, 211, 238, 0.5), inset 0 0 5px rgba(34, 211, 238, 0.1);
+      }
+      /* Custom Scrollbar for lists if needed */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #22d3ee; 
+        border-radius: 3px;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
