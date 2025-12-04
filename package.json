@@ -1,22 +1,27 @@
 {
   "name": "nebula-system-monitor",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "Axon~Tesla Tech System Monitor",
+  "main": "electron/main.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000",
     "build": "vite build",
-    "preview": "vite preview"
+    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\""
   },
   "dependencies": {
-    "react-dom": "^19.2.1",
-    "lucide-react": "^0.555.0",
-    "react": "^19.2.1"
+    "lucide-react": "^0.344.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "systeminformation": "^5.22.0"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
+    "electron": "^29.1.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.4",
+    "wait-on": "^7.2.0"
   }
 }
