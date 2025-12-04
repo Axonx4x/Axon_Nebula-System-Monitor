@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Repeat, Upload, Music, Film, List, X, Volume2 } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Repeat, Upload, Music, Film, List, X, Shuffle } from 'lucide-react';
 import { MediaItem } from '../types';
 
 interface MediaPlayerWidgetProps {
@@ -11,6 +12,7 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLooping, setIsLooping] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -40,11 +42,17 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
        analyserRef.current.fftSize = 256;
     }
 
-    // Connect source only once
-    if (!sourceRef.current) {
-       sourceRef.current = ctx.createMediaElementSource(element);
-       sourceRef.current.connect(analyserRef.current);
-       analyserRef.current.connect(ctx.destination);
+    // Connect source only once to prevent errors on re-renders
+    // We check if the element already has a connected source in a real app, 
+    // but here we just try-catch or ensure we don't reconnect purely based on ref existence
+    try {
+        if (!sourceRef.current) {
+            sourceRef.current = ctx.createMediaElementSource(element);
+            sourceRef.current.connect(analyserRef.current);
+            analyserRef.current.connect(ctx.destination);
+        }
+    } catch (e) {
+        // Element already connected
     }
 
     drawVisualizer();
@@ -61,7 +69,6 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
     if (!canvasCtx) return;
 
     const render = () => {
-      // Check if component is still mounted/canvas exists
       if (!canvasRef.current) return;
       
       analyserRef.current!.getByteFrequencyData(dataArray);
@@ -96,12 +103,23 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
     render();
   };
 
+  // Effect to handle Auto-Play when track changes
+  useEffect(() => {
+    if (isPlaying && currentTrack) {
+        const timeout = setTimeout(() => {
+            const el = currentTrack.type === 'video' ? videoRef.current : audioRef.current;
+            if (el) {
+                el.play().catch(e => console.error("Autoplay interrupted", e));
+            }
+        }, 100); // Small delay to ensure DOM update
+        return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, currentTrack]); // Trigger when index or track changes
+
   useEffect(() => {
     if (isPlaying && currentTrack?.type === 'audio') {
-        // Delay slightly to ensure ref is mounted
         setTimeout(() => {
             if (audioRef.current) {
-                // Resume context if suspended (browser policy)
                 if (audioContextRef.current?.state === 'suspended') {
                     audioContextRef.current.resume();
                 }
@@ -127,13 +145,26 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
   };
 
   const nextTrack = () => {
-    setCurrentIndex((prev) => (prev + 1) % queue.length);
-    setIsPlaying(false); // Reset play state for new track (or auto-play if preferred)
+    if (queue.length === 0) return;
+    
+    let nextIndex;
+    if (isShuffling) {
+        // Pick random index different from current
+        do {
+            nextIndex = Math.floor(Math.random() * queue.length);
+        } while (queue.length > 1 && nextIndex === currentIndex);
+    } else {
+        nextIndex = (currentIndex + 1) % queue.length;
+    }
+    
+    setCurrentIndex(nextIndex);
+    // Note: We do NOT set isPlaying(false) here, allowing continuous playback via useEffect
   };
 
   const prevTrack = () => {
-    setCurrentIndex((prev) => (prev - 1 + queue.length) % queue.length);
-    setIsPlaying(false);
+    if (queue.length === 0) return;
+    const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
+    setCurrentIndex(prevIndex);
   };
 
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLMediaElement>) => {
@@ -146,6 +177,18 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
     const el = currentTrack?.type === 'video' ? videoRef.current : audioRef.current;
     if (el) el.currentTime = time;
     setProgress(time);
+  };
+
+  const handleTrackEnd = () => {
+      if (isLooping) {
+          const el = currentTrack?.type === 'video' ? videoRef.current : audioRef.current;
+          if (el) {
+              el.currentTime = 0;
+              el.play();
+          }
+      } else {
+          nextTrack();
+      }
   };
 
   const formatTime = (t: number) => {
@@ -194,7 +237,7 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
                </div>
                <div className="p-2 overflow-y-auto h-[calc(100%-50px)] space-y-1">
                    {queue.map((item, idx) => (
-                       <div key={item.id} onClick={() => { setCurrentIndex(idx); setIsPlaying(false); }} className={`p-2 rounded text-xs font-tech cursor-pointer truncate ${idx === currentIndex ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'text-slate-400 hover:bg-white/5'}`}>
+                       <div key={item.id} onClick={() => { setCurrentIndex(idx); setIsPlaying(true); }} className={`p-2 rounded text-xs font-tech cursor-pointer truncate ${idx === currentIndex ? 'bg-fuchsia-500/20 text-fuchsia-300' : 'text-slate-400 hover:bg-white/5'}`}>
                            {item.file.name}
                        </div>
                    ))}
@@ -211,8 +254,7 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
                                 src={currentTrack.url}
                                 className="w-full h-full object-contain"
                                 onTimeUpdate={handleTimeUpdate}
-                                onEnded={() => { if (isLooping) videoRef.current?.play(); else nextTrack(); }}
-                                loop={isLooping}
+                                onEnded={handleTrackEnd}
                             />
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center relative">
@@ -232,8 +274,7 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
                                     ref={audioRef} 
                                     src={currentTrack.url} 
                                     onTimeUpdate={handleTimeUpdate} 
-                                    onEnded={() => { if (isLooping) audioRef.current?.play(); else nextTrack(); }}
-                                    loop={isLooping}
+                                    onEnded={handleTrackEnd}
                                     crossOrigin="anonymous"
                                 />
                             </div>
@@ -269,9 +310,20 @@ const MediaPlayerWidget: React.FC<MediaPlayerWidgetProps> = ({ queue, onUpload }
                </div>
 
                <div className="flex items-center gap-2 text-slate-400">
+                   <button 
+                       onClick={() => setIsShuffling(!isShuffling)} 
+                       className={`p-2 transition-colors ${isShuffling ? 'text-fuchsia-400' : 'hover:text-white'}`}
+                       title="Shuffle Playlist"
+                   >
+                       <Shuffle size={16} />
+                   </button>
                    <button onClick={prevTrack} className="p-2 hover:text-white"><SkipBack size={16} /></button>
                    <button onClick={nextTrack} className="p-2 hover:text-white"><SkipForward size={16} /></button>
-                   <button onClick={() => setIsLooping(!isLooping)} className={`p-2 transition-colors ${isLooping ? 'text-fuchsia-400' : 'hover:text-white'}`}>
+                   <button 
+                       onClick={() => setIsLooping(!isLooping)} 
+                       className={`p-2 transition-colors ${isLooping ? 'text-fuchsia-400' : 'hover:text-white'}`}
+                       title="Loop Track"
+                   >
                        <Repeat size={16} />
                    </button>
                </div>

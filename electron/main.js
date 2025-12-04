@@ -11,9 +11,12 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
+    minWidth: 1000,
+    minHeight: 700,
     frame: false, // Frameless for the widget look
     transparent: true, // Transparent background
     hasShadow: false,
+    icon: path.join(__dirname, '../public/icon.png'), // Optional: Add an icon.png to public folder
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -21,11 +24,15 @@ function createWindow() {
     },
   });
 
-  // Load from localhost if dev, or build file if prod
-  const startUrl = process.env.ELECTRON_START_URL || 'http://localhost:3000';
-  mainWindow.loadURL(startUrl);
-
-  // mainWindow.webContents.openDevTools(); // Uncomment for debugging
+  // PRODUCTION: Load the built index.html
+  // DEVELOPMENT: Load localhost
+  if (app.isPackaged) {
+    mainWindow.loadFile(path.join(__dirname, '../build/index.html'));
+  } else {
+    const startUrl = process.env.ELECTRON_START_URL || 'http://localhost:3000';
+    mainWindow.loadURL(startUrl);
+    // mainWindow.webContents.openDevTools(); 
+  }
 }
 
 app.whenReady().then(() => {

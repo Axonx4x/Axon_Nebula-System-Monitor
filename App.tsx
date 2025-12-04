@@ -1,6 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
-import { Cpu, HardDrive, Activity, Wifi } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Cpu, HardDrive, Activity, Wifi, Image as ImageIcon } from 'lucide-react';
 import { SystemData, BatteryStatus, NavigatorWithBattery, MediaItem } from './types';
 import { getSimulatedSystemData, updateStorageEstimate, REAL_CORES } from './services/mockDataService';
 import CpuVisualizer from './components/CpuVisualizer';
@@ -14,6 +14,8 @@ const App: React.FC = () => {
   // Initialize with null or basic default to prevent flicker before first data load
   const [systemData, setSystemData] = useState<SystemData | null>(null);
   const [battery, setBattery] = useState<BatteryStatus | null>(null);
+  const [bgImage, setBgImage] = useState<string | null>(null);
+  const bgInputRef = useRef<HTMLInputElement>(null);
   
   const [mediaQueue, setMediaQueue] = useState<MediaItem[]>([]);
   const [imageQueue, setImageQueue] = useState<MediaItem[]>([]);
@@ -109,6 +111,13 @@ const App: React.FC = () => {
     }
   };
 
+  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setBgImage(URL.createObjectURL(file));
+    }
+  };
+
   if (!systemData) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-cyan-500 font-sci">INITIALIZING SYSTEM...</div>;
 
   const ramPercent = (systemData.ram.used / systemData.ram.total) * 100;
@@ -117,8 +126,19 @@ const App: React.FC = () => {
     <div className="min-h-screen w-full relative bg-slate-950 text-white overflow-x-hidden selection:bg-cyan-500/30 font-sans">
       
       {/* --- BACKGROUND LAYERS (Fixed) --- */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black pointer-events-none -z-50"></div>
+      {bgImage ? (
+        <div 
+          className="fixed inset-0 bg-cover bg-center pointer-events-none -z-50 transition-all duration-1000 opacity-60"
+          style={{ backgroundImage: `url(${bgImage})` }}
+        >
+          {/* Dark Overlay for readability */}
+          <div className="absolute inset-0 bg-slate-950/70"></div>
+        </div>
+      ) : (
+        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black pointer-events-none -z-50"></div>
+      )}
       
+      {/* Ambient Blobs (Still visible over custom BG for effect) */}
       <div className="fixed top-[-20%] left-[20%] w-[60vw] h-[60vw] bg-cyan-900/10 rounded-full blur-[120px] pointer-events-none animate-pulse -z-40" style={{ animationDuration: '8s' }}></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-fuchsia-900/10 rounded-full blur-[120px] pointer-events-none animate-pulse -z-40" style={{ animationDelay: '2s', animationDuration: '10s' }}></div>
 
@@ -153,12 +173,22 @@ const App: React.FC = () => {
                 <span className="h-[2px] w-32 bg-gradient-to-r from-cyan-500/50 to-transparent"></span>
              </div>
           </div>
-          <div className="text-right hidden md:block">
+          <div className="text-right flex flex-col items-end gap-2">
              <div className="flex items-center justify-end gap-2 text-cyan-400/80 mb-1">
                 <span className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,1)]"></span>
                 <span className="text-xs font-sci">LINK ESTABLISHED</span>
              </div>
              <span className="block text-xs font-tech text-slate-500 tracking-[0.2em]">CACHY OS // PLASMA 6.0</span>
+             
+             {/* Background Changer Button */}
+             <button 
+                onClick={() => bgInputRef.current?.click()}
+                className="flex items-center gap-2 px-3 py-1 mt-1 rounded bg-slate-800/50 border border-white/5 hover:border-cyan-500/30 transition-all group"
+             >
+                <ImageIcon size={12} className="text-slate-500 group-hover:text-cyan-400" />
+                <span className="text-[9px] font-tech text-slate-500 group-hover:text-white uppercase tracking-widest">Set Wallpaper</span>
+             </button>
+             <input type="file" ref={bgInputRef} className="hidden" accept="image/*" onChange={handleBgUpload} />
           </div>
         </header>
 
